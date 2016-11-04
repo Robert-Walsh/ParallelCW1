@@ -3,28 +3,28 @@
  
 #define FAILURE 0
 #define SUCCESS 1
- 
 #define DIMENSIONS 5
- 
- 
-#define ARRAY2DLOOKUP(SquareArray, Dim, X, Y) (SquareArray)[(Y)*Dim + (X)]
+
+#define ARRAY2DLOOKUP(SquareArray, Dim, X, Y) (SquareArray)[(Y)*(Dim) + (X)]
  
  
 /*
 *    \param    squareArray    A pointer to a square multidimensional array
-*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               *                             multidimensional array.
+*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               
+*                             multidimensional array.
 *
 */
 void printArray(double* squareArray, int dim);
  
- 
 /*
-*    This function modifys the data pointed to by the squareArray in iterations
+*    This function modifies the data pointed to by the squareArray in iterations
 *    where each value is the average of its four neighbours.
 *
 *    \param    squareArray    A pointer to a square multidimensional array
-*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               *                             multidimensional array.
-*    \param    precision      The solver will finish when the values per iteration in total change less than or equal to this   *                              value
+*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               
+*                             multidimensional array.
+*    \param    precision      The solver will finish when the values per iteration in total change less than or equal to this   
+*                             value
 *
 *    \returns  0 when did not finish successfully and 1 when it does finish successfully.
 */
@@ -61,12 +61,7 @@ int solver(double* squareArray, int dim, double precision /*, int nThreads*/) {
     return SUCCESS;
 }
  
- 
- 
 int main() {
- 
- 
- 
     /// Square multidimensional array in row-column format. E.g. data[1][2] looks up x=2, y=1  
     double data[DIMENSIONS][DIMENSIONS] =   {
                                                 {1.0,2.0,0.5,3.0,2.2},
@@ -91,8 +86,6 @@ int main() {
         return -1; /// Failure
     }
  
- 
- 
     printf("After Solver:\n");
     printArray(&data[0][0], DIMENSIONS);
     printf("\n\n");
@@ -108,5 +101,4 @@ void printArray(double* squareArray, int dim){
         }
         printf("\n");
     }
- 
 }
