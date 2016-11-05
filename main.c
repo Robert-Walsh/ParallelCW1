@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <pthread.h>
  
 #define FAILURE 0
 #define SUCCESS 1
@@ -8,9 +9,11 @@
 #define ARRAY2DLOOKUP(SquareArray, Dim, X, Y) (SquareArray)[(Y)*(Dim) + (X)]
  
  
+void* arrayManipulator(void* args);
+ 
 /*
 *    \param    squareArray    A pointer to a square multidimensional array
-*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               
+*    \param    dim            Dimensions of the square multidimensional array. The width and height of the square               
 *                             multidimensional array.
 *
 */
@@ -21,7 +24,7 @@ void printArray(double* squareArray, int dim);
 *    where each value is the average of its four neighbours.
 *
 *    \param    squareArray    A pointer to a square multidimensional array
-*    \param    dim            Dimensions of the square multidimensional array. The Width and Height of the square               
+*    \param    dim            Dimensions of the square multidimensional array. The width and height of the square               
 *                             multidimensional array.
 *    \param    precision      The solver will finish when the values per iteration in total change less than or equal to this   
 *                             value
@@ -60,8 +63,83 @@ int solver(double* squareArray, int dim, double precision /*, int nThreads*/) {
  
     return SUCCESS;
 }
+struct arg_struct {
+    double* squareArray;
+    int dim;
+    double precision;
+    
+    int success;
+};
+
+int parallelSolver(double* squareArray, int dim, double precision, int nThreads) {
+    
+    printf("Entered parallel solver \n");
+    
+    struct arg_struct args = {
+        squareArray, 
+        dim,
+        precision,
+        0
+    };
+    
+    pthread_t thread;
+    
+    pthread_create(&thread, NULL, arrayManipulator, (void *)&args);
+    
+    pthread_join(thread, NULL);
  
-int main() {
+    return SUCCESS;
+}
+
+
+
+void* arrayManipulator(void* args){
+    printf("Entered arrayManipulator \n");
+    int x,y;
+    double workingTemp;
+    double largestChange;
+    double ABSed;
+    
+    struct arg_struct* arguments =  ((struct arg_struct*)args);
+    double* squareArray = arguments->squareArray;
+    int dim = arguments->dim;
+    double precision = arguments->precision;
+    int counter = 0;
+    do{     
+        
+           
+        largestChange = 0.0;
+        for(y=1; y<dim-1; ++y){
+            for(x=1; x<dim-1; ++x){
+ 
+                workingTemp = (  ARRAY2DLOOKUP(squareArray,dim,x+1,y)
+                                    + ARRAY2DLOOKUP(squareArray,dim,x-1,y)
+                                    + ARRAY2DLOOKUP(squareArray,dim,x,y+1)
+                                    + ARRAY2DLOOKUP(squareArray,dim,x,y-1)
+                                   )/4.0;
+               
+                workingTemp = workingTemp-ARRAY2DLOOKUP(squareArray,dim,x,y);
+                ABSed = fabs(workingTemp);
+                if(ABSed>largestChange){
+                    largestChange = ABSed;
+                }
+               
+                ARRAY2DLOOKUP(squareArray,dim,x,y) += workingTemp;
+            }
+        }
+        ++counter;
+       
+    } while(largestChange>precision);
+        
+    printf("Number of iterations: %d\n\n", counter);
+    
+    arguments->success = 1;
+    
+    return NULL;
+}
+ 
+int main(int argc, char *argv[]) {    
+    
     /// Square multidimensional array in row-column format. E.g. data[1][2] looks up x=2, y=1  
     double data[DIMENSIONS][DIMENSIONS] =   {
                                                 {1.0,2.0,0.5,3.0,2.2},
@@ -81,7 +159,7 @@ int main() {
     printArray(&data[0][0], DIMENSIONS);
     printf("\n\n");
    
-    if(!solver(&data[0][0], DIMENSIONS, 1.0)){
+    if(!parallelSolver(&data[0][0], DIMENSIONS, 0.001, 1)){
         printf("Failed to solve :(");
         return -1; /// Failure
     }

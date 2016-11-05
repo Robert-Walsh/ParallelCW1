@@ -52,7 +52,7 @@ int countPositiveParallel(int* array, int length, int nThreads){
             
             counterArgs[i].result = -1;
             
-            /* // Rob's shit way
+            /* // Rob's way (not efficient, too many divisions)
              if(i==nThreads-1){
                 counterArgs[i].array = array+(((length/nThreads)*i)+(length%nThreads);
                 counterArgs[i].length = (length/nThreads)+(length%nThreads);
@@ -62,12 +62,12 @@ int countPositiveParallel(int* array, int length, int nThreads){
             }
             */
             
-            /// Jack's awesome way
+            /// Jack's way
             counterArgs[i].array = array;
             counterArgs[i].length = (i!=nThreads-1 ? numberPerThread : (numberPerThread + (length%numberPerThread)) );
             
             array += numberPerThread;
-            //// Jack's awesome way end
+            //// Jack's way end
                         
             pthread_create(&threads[i], NULL, &countPositive_ParallelWrapper, (void*)&counterArgs[i]);
         }
