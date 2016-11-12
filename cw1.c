@@ -60,11 +60,33 @@ void* arrayManipulator(void* arguments){
     struct arg_struct *args = arguments;
     double *array_start = args->ARRAY_START;
     
-    printf("%p\n", (void *) &array_start);
+    // printf("%p\n", (void *) &array_start);
+    // printf("----------------------------\n");
+    // printf("%lf\n\n\n\n\n", *array_start);
+    // printf("----------------------------\n");
     
+    
+    double f;
+    
+    int i;
+    for(i=(DIMENSION*1)+1;i<(DIMENSION*2)-1;++i){   
+       // double *start = (array_start+i)
+          
+        double above = *((array_start+i)-DIMENSION);
+        double right = *((array_start+i)+1);
+        double below = *((array_start+i)+DIMENSION);
+        double left = *((array_start+i)-1);
 
-
-    printf("HEEEEEEEEEEEEEEELLLLLLLLLLLOOOOOOOOOOO WOOOOOOOOOOOOOORLLLLLLLLLLLLLLDDDDDDDD");
+        printf("---------^^^^^^^^^^^^^^^^^^^^^-------------------\n");
+        f = *(array_start+i);
+        printf("%lf\n", *(array_start+i));
+        printf("%lf\n", above);
+        printf("%lf\n", right);
+        printf("%lf\n", below);
+        printf("%lf\n", left);
+        printf("-------------^^^^^^^^^^^^^^^---------------\n");
+    }
+    
 }
 
 
