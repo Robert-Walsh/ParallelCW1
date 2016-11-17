@@ -6,10 +6,8 @@
 #define SUCCESS 1
 #define ARRAY2DLOOKUP(SquareArray, Dim, X, Y) (SquareArray)[(Y)*(Dim) + (X)]
 
-
 pthread_mutex_t printLock;
 pthread_barrier_t barrierTest;
-
 
 pthread_barrier_t barrierEnterLoop;
 pthread_barrier_t barrierEndLoop;
@@ -18,15 +16,6 @@ pthread_mutex_t signalEndMutex;
 
 int fUnderPrecision = 1;
 int fSignalEnd = 0;
-
-struct arg_struct {
-    double *arrayStart;
-    int dimension;
-    double precision;
-    #ifdef DEBUG
-    double *arrayStartStart;
-    #endif
-};
 
 struct segment_LinkedListNode {
 	double* segmentStart;
@@ -48,14 +37,14 @@ void deleteArgsLinkedList(struct segment_LinkedListNode* args) {
 }
 
 
-struct arg_struct_new {
+struct arg_struct {
 	struct segment_LinkedListNode linkedListStart;
 
 	double precision;
 	int totalSquareArrayDimensions;
 };
 
-void deleteArgs(struct arg_struct_new* args) {
+void deleteArgs(struct arg_struct* args) {
 	deleteArgsLinkedList(&args->linkedListStart);
 	args->precision = 0.0;
 	args->totalSquareArrayDimensions = 0;
@@ -63,7 +52,6 @@ void deleteArgs(struct arg_struct_new* args) {
 void printArray(double* squareArray, int dim);
 
 void* arrayManipulator(void* args);
-void* arrayManipulator_new(void* args);
 
 int solver(double* squareArray, int dim, double precision, int nThreads) {
 
@@ -77,69 +65,8 @@ int solver(double* squareArray, int dim, double precision, int nThreads) {
     // if(nThreads>((dim-1)/2)){
     //     nThreads = (dim-1)/2;
     // }
-
-    if(nThreads>dim-2){
-        nThreads = dim-2;
-    }
-
     pthread_t threads[nThreads];
     struct arg_struct arguments[nThreads]; //make an array of structs
-
-
-
-
-  //  pthread_barrier_init(&barrierTest, NULL, nThreads);
-    pthread_barrier_init(&barrierEnterLoop, NULL, nThreads);
-    pthread_barrier_init(&barrierEndLoop, NULL, nThreads);
-
-    // printf("%d", NUM_OF_THREADS);
-    // printf("hello");
-
-
-    fUnderPrecision = 1;
-
-    int i=0;
-    //do{
-
-    if(nThreads == dim-2){
-        for(i=0; i<nThreads; ++i){
-            arguments[i].arrayStart = &squareArray[i*dim];
-            arguments[i].dimension = dim;
-            #ifdef DEBUG
-            arguments[i].arrayStartStart =  squareArray;
-            #endif
-
-            pthread_create(&(threads[i]), NULL, arrayManipulator, (void *)&arguments[i]);
-        }
-
-        //join threads
-        int j;
-        for (j = 0; j < nThreads; j++){
-            pthread_join(threads[j], NULL);
-        }
-
-    }
-
-   // }
-    //while(1==0);//largestChange<precision);
-
-
-}
-
-int solver_new(double* squareArray, int dim, double precision, int nThreads) {
-
-    int rows = dim-2;
-    int numberOfNumbers = rows*rows;
-
-    double largestChange;
-    double ABSed;
-
-    //set number of threads as the max amount of rows we can work on at any time
-    // if(nThreads>((dim-1)/2)){
-    //     nThreads = (dim-1)/2;
-    // }
-    pthread_t threads[nThreads];
-    struct arg_struct_new arguments[nThreads]; //make an array of structs
 
     pthread_barrier_init(&barrierTest, NULL, nThreads);
     pthread_barrier_init(&barrierEnterLoop, NULL, nThreads);
@@ -212,7 +139,7 @@ int solver_new(double* squareArray, int dim, double precision, int nThreads) {
 
 		}
 
-        pthread_create(&threads[i], NULL, arrayManipulator_new, (void *)&arguments[i]);
+        pthread_create(&threads[i], NULL, arrayManipulator, (void *)&arguments[i]);
     }
 
     //join threads
@@ -230,86 +157,26 @@ int solver_new(double* squareArray, int dim, double precision, int nThreads) {
 
 }
 
+
 void* arrayManipulator(void* arguments){
     fUnderPrecision = 1;
-    pthread_barrier_wait (&barrierEnterLoop);
 
     struct arg_struct *args = arguments;
-    double *arrayStart = args->arrayStart;
-    int dim = args->dimension;
-    double precision = args->precision;
-
-    // printf("%p\n", (void *) &arrayStart);
-    // printf("----------------------------\n");
-    // printf("%lf\n\n\n\n\n", *arrayStart);
-    // printf("----------------------------\n");
-
-
-    int i;
-    do{
-        for(i=(dim)+1;i<(dim*2)-1;++i){
-            double prevIteration = arrayStart[i];
-            arrayStart[i] = (arrayStart[i-dim]
-                                + arrayStart[i+1]
-                                + arrayStart[i+dim]
-                                + arrayStart[i-1]
-                              )
-                              /4.0;
-
-            if(fUnderPrecision == 1 && fabs(arrayStart[i]-prevIteration) > precision){
-                fUnderPrecision = 0;
-            }
-        }
-
-
-
-        pthread_barrier_wait(&barrierEndLoop);
-
-    } while(fUnderPrecision == 0);
-     /*
-    int i;
-    for(i=(dim)+1;i<(dim*2)-1;++i){
-       // double *start = (arrayStart+i)
-
-        *(arrayStart+i) = (*((arrayStart+i)-dim)
-                            + *((arrayStart+i)+1)
-                            + *((arrayStart+i)+dim)
-                            + *((arrayStart+i)-1))/4.0;
-
-
-        // printf("---------^^^^^^^^^^^^^^^^^^^^^-------------------\n");
-        // f = *(arrayStart+i);
-        // printf("%lf\n", *(arrayStart+i));
-        // printf("%lf\n", above);
-        // printf("%lf\n", right);
-        // printf("%lf\n", below);
-        // printf("%lf\n", left);
-        // printf("-------------^^^^^^^^^^^^^^^---------------\n");
-    }
-    */
-    #ifdef DEBUG
-    printArray(args->arrayStartStart, dim);
-    #endif
-
-    pthread_barrier_wait (&barrierTest);
-
-}
-
-
-void* arrayManipulator_new(void* arguments){
-    fUnderPrecision = 1;
-    pthread_barrier_wait (&barrierEnterLoop);
-
-    struct arg_struct_new *args = arguments;
 
 	struct segment_LinkedListNode* linkedListIterator = &args->linkedListStart;
 
     int dim = args->totalSquareArrayDimensions;
     double precision = args->precision;
 
-    int j;
+    int j,iteration;
+    iteration = 0;
     do{
-        for(/*no init*/; linkedListIterator!=NULL;linkedListIterator = linkedListIterator->next ){
+        printf("%d is SETTING UNDER PRECISION as 1 \n", (int)pthread_self());
+        fUnderPrecision = 1;
+
+        pthread_barrier_wait (&barrierEnterLoop);
+        printf("%d thread iteration %d\n", (int)pthread_self(), iteration);
+        for(linkedListIterator = &args->linkedListStart; linkedListIterator!=NULL;linkedListIterator = linkedListIterator->next ){
             for(j = 0; j < linkedListIterator->segmentLength; ++j){
                 double prevIteration = (linkedListIterator->segmentStart)[j];
                 (linkedListIterator->segmentStart)[j] = ( (linkedListIterator->segmentStart)[j-dim]
@@ -318,19 +185,27 @@ void* arrayManipulator_new(void* arguments){
                                                         + (linkedListIterator->segmentStart)[j+dim]
                                                       ) / 4.0;
 
+                printf("%d SEES UNDER PRECISION as %d \n", (int)pthread_self(), fUnderPrecision);
                 if(fUnderPrecision == 1 && fabs((linkedListIterator->segmentStart)[j]-prevIteration) > precision){
+                    printf("%d is SETTING UNDER PRECISION as 0 \n", (int)pthread_self());
                     fUnderPrecision = 0;
                 }
 
             }
         }
 
-        pthread_mutex_lock(&signalEndMutex);
-        if(fSignalEnd == 0 && fUnderPrecision == 1){ fSignalEnd = 1; }
-        else{ fUnderPrecision = 1; }
-        pthread_mutex_unlock(&signalEndMutex);
-
         pthread_barrier_wait (&barrierEndLoop);
+        printf("%d is LOCKED\n", (int)pthread_self());
+        pthread_mutex_lock(&signalEndMutex);
+        if(fSignalEnd == 0 && fUnderPrecision == 1){
+            printf("%d is SETTING SIGNAL END as 1 \n", (int)pthread_self());
+            fSignalEnd = 1;
+        }
+
+        pthread_mutex_unlock(&signalEndMutex);
+        pthread_barrier_wait (&barrierTest);
+
+        ++iteration;
     } while(fSignalEnd == 0);
 }
 
@@ -338,7 +213,7 @@ void* arrayManipulator_new(void* arguments){
 int main(int argc, char *argv[]) {
 
     static const int dimension = 5;
-    static const int numberOfThreads = 5;
+    static const int numberOfThreads = 2;
     static const double precision = 0.001; //the precision to average the numbers to
     /// Square multidimensional array in row-column format. E.g. data[1][2] looks up x=2, y=1
     double data[5][5] =   {
@@ -366,7 +241,7 @@ int main(int argc, char *argv[]) {
     printf("\n\n");
 
 
-    solver_new(&data[0][0], dimension, precision, numberOfThreads);
+    solver(&data[0][0], dimension, precision, numberOfThreads);
 
 
     printf("After Solver:\n");
